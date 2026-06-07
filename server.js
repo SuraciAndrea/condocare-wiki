@@ -526,10 +526,15 @@ app.patch('/api/tickets/:id', (req, res) => {
   const tickets = leggiTickets();
   const idx     = tickets.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ errore: 'Ticket non trovato.' });
-  const { stato, noteAdmin, gestitoDa } = req.body;
-  if (stato)     tickets[idx].stato     = stato;
-  if (noteAdmin) tickets[idx].noteAdmin = noteAdmin;
-  if (gestitoDa) tickets[idx].gestitoDa = gestitoDa;
+  const { stato, noteAdmin, gestitoDa, rispostaAdmin } = req.body;
+  if (stato)         tickets[idx].stato          = stato;
+  if (noteAdmin)     tickets[idx].noteAdmin       = noteAdmin;
+  if (gestitoDa)     tickets[idx].gestitoDa       = gestitoDa;
+  if (rispostaAdmin) {
+    tickets[idx].rispostaAdmin   = rispostaAdmin;
+    tickets[idx].rispostaAdminAt = new Date().toISOString();
+    tickets[idx].stato           = tickets[idx].stato || 'chiusa_admin';
+  }
   tickets[idx].aggiornatoAt = new Date().toISOString();
   salvaTickets(tickets);
   res.json(tickets[idx]);
