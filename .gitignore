@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+
+# I file backup del server non servono in produzione
+server_Backup1.js
+server_Claude.js
+server_nnva.js
+server_originale.js

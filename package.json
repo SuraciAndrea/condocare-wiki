@@ -1,0 +1,15 @@
+{
+  "name": "llm-wiki-local",
+  "version": "1.0.0",
+  "description": "Interroga i tuoi documenti con AI locale (Ollama) - gratis e privato",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0"
+  }
+}

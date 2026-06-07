@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WikiLocal — Chat Condòmino</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Layout a 2 colonne: lista conversazioni | chat attiva */
+    .chat-page {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .chat-body {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      overflow: hidden;
+    }
+
+    /* ── Pannello sinistro: lista conversazioni ── */
+    .conv-list-panel {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .conv-list-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .conv-list-header span {
+      font-family: var(--font-serif);
+      font-size: .95rem;
+      color: var(--green-dark);
+    }
+    .btn-nuova {
+      background: var(--green-dark);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 5px 12px;
+      font-family: var(--font-sans);
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+    .btn-nuova:hover { background: var(--green-mid); }
+
+    .conv-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .conv-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--cream-dark);
+      cursor: pointer;
+      transition: background var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .conv-item:hover { background: var(--cream); }
+    .conv-item.active { background: var(--sand-pale); border-left: 3px solid var(--sand); }
+    .conv-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .conv-item-id { font-size: .7rem; color: var(--text-light); }
+    .conv-item-stato {
+      font-size: .68rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+    .stato-chiusa     { background: #EEF6F1; color: #2D6646; }
+    .stato-aperta     { background: var(--red-pale); color: var(--red); }
+    .stato-in_gestione{ background: var(--blue-pale); color: #2C5F73; }
+    .stato-chiusa_admin{ background: var(--sand-pale); color: #7A5A2A; }
+    .conv-item-preview {
+      font-size: .82rem;
+      color: var(--text-main);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .conv-item-meta { font-size: .71rem; color: var(--text-light); }
+    .conv-list-empty {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .83rem;
+    }
+
+    /* ── Pannello destro: chat attiva ── */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--cream);
+    }
+
+    /* Placeholder quando nessuna conv selezionata */
+    .chat-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+    .chat-placeholder .ph-icon { font-size: 3rem; opacity: .4; }
+    .chat-placeholder p { font-size: .85rem; }
+
+    /* Ticket pill */
+    .ticket-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .71rem; font-weight: 600; margin-top: 6px;
+    }
+    .ticket-pill.chiusa      { background: #EEF6F1; color: #2D6646; }
+    .ticket-pill.aperta      { background: var(--red-pale); color: var(--red); }
+    .ticket-pill.chiusa_admin{ background: var(--sand-pale); color: #7A5A2A; }
+
+    /* Fonti */
+    .msg-fonti {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px;
+    }
+    .fonte-tag {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px;
+      background: var(--sand-pale); border: 1px solid var(--sand-light);
+      border-radius: 20px; font-size: .69rem; color: #7A5A2A;
+    }
+
+    /* Risposta admin */
+    .msg.admin .msg-bubble {
+      background: var(--sand-pale);
+      border: 1px solid var(--sand-light);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* id-wrap */
+    .id-wrap {
+      padding: 8px 20px;
+      background: var(--sand-pale);
+      border-bottom: 1px solid var(--sand-light);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .id-wrap label { font-size: .8rem; color: #7A5A2A; font-weight: 500; white-space: nowrap; }
+    .id-wrap input {
+      padding: 5px 9px;
+      border: 1.5px solid var(--sand-light); border-radius: var(--radius-sm);
+      font-family: var(--font-sans); font-size: .84rem;
+      background: var(--white); outline: none;
+    }
+    .id-wrap input:focus { border-color: var(--sand); }
+    .id-wrap input.nome  { width: 180px; }
+    .id-wrap input.condo { width: 240px; }
+  </style>
+</head>
+<body>
+<div class="chat-page">
+
+  <!-- Header -->
+  <header class="chat-header">
+    <div class="chat-header-left">
+      <a href="index.html" class="logo" style="text-decoration:none;">
+        <div class="logo-icon" style="width:32px;height:32px;font-size:16px;border-radius:8px;">📚</div>
+        <span class="logo-text" style="font-size:1.1rem;">
+          <span class="condo">Wiki</span><span class="care">Local</span>
+        </span>
+      </a>
+      <div class="chat-header-condo">
+        <span class="name" id="headerCondominio">Condominio</span>
+        <span class="address">Assistente AI · Risposta in tempo reale</span>
+      </div>
+    </div>
+    <div class="chat-header-user">
+      <span id="headerNome">—</span>
+      <div class="chat-header-avatar" id="headerAvatar">?</div>
+    </div>
+  </header>
+
+  <div class="chat-body">
+
+    <!-- ── Pannello sinistro ── -->
+    <div class="conv-list-panel">
+      <!-- Identità -->
+      <div class="id-wrap">
+        <label>👤</label>
+        <input class="nome" type="text" id="inputNome" placeholder="Nome Cognome" value="Carla Ferretti">
+        <label>🏢</label>
+        <input class="condo" type="text" id="inputCondominio" placeholder="Condominio" value="Via Roma 14, Milano">
+      </div>
+
+      <div class="conv-list-header">
+        <span>Conversazioni</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-nuova" onclick="nuovaConversazione()">+ Nuova</button>
+          <button class="btn-nuova" onclick="resetSessione()" style="background:var(--red);font-size:.7rem;" title="Cancella tutte le conversazioni">↺</button>
+        </div>
+      </div>
+
+      <div class="conv-list-scroll" id="convList">
+        <div class="conv-list-empty">Nessuna conversazione.<br>Clicca "+ Nuova" per iniziare.</div>
+      </div>
+    </div>
+
+    <!-- ── Pannello destro ── -->
+    <div class="chat-area" id="chatArea">
+
+      <!-- Placeholder iniziale -->
+      <div class="chat-placeholder" id="chatPlaceholder">
+        <div class="ph-icon">💬</div>
+        <p>Seleziona una conversazione<br>o clicca <strong>+ Nuova</strong> per iniziare.</p>
+      </div>
+
+      <!-- Chat attiva (nascosta finché non selezionata) -->
+      <div id="chatActive" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+        <!-- Quick actions (solo per conv nuova) -->
+        <div class="chat-quick" id="quickActions" style="display:none;">
+          <button class="chat-quick-btn" data-text="Quanto devo pagare per la rata e quando scade?">💶 Rata e pagamenti</button>
+          <button class="chat-quick-btn" data-text="Può mandarmi il verbale dell'ultima assemblea condominiale?">📄 Verbale assemblea</button>
+          <button class="chat-quick-btn" data-text="Quando finiscono i lavori? Ci sono aggiornamenti?">ℹ️ Stato lavori</button>
+          <button class="chat-quick-btn" data-text="C'è una perdita d'acqua nel corridoio del piano terra, segnalo subito.">⚠️ Segnala problema</button>
+        </div>
+
+        <!-- Messaggi -->
+        <div class="chat-messages" id="chatMessages" style="flex:1;overflow-y:auto;"></div>
+
+        <!-- Input -->
+        <div class="chat-input-area" id="chatInputArea">
+          <div class="chat-input-row">
+            <textarea id="chatInput" class="chat-input" placeholder="Scrivi la tua richiesta…" rows="1" autocomplete="off"></textarea>
+            <button id="sendBtn" class="chat-send-btn" title="Invia">➤</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Stato ────────────────────────────────────────────────────────────────────
+const state = {
+  convAttiva:    null,   // ticket attivo
+  modalita:      null,   // 'nuova' | 'storico'
+  pollingMap:    {},     // ticketId → intervalId
+  mioTickets:    []      // tickets filtrati per questo utente
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  aggiornaHeader();
+  setupInput();
+  caricaConversazioni();
+  document.getElementById('inputNome').addEventListener('input', () => { aggiornaHeader(); caricaConversazioni(); });
+  document.getElementById('inputCondominio').addEventListener('input', () => { aggiornaHeader(); caricaConversazioni(); });
+});
+
+function aggiornaHeader() {
+  const nome  = getNome();
+  const condo = getCondo();
+  document.getElementById('headerNome').textContent       = nome;
+  document.getElementById('headerCondominio').textContent = condo;
+  document.getElementById('headerAvatar').textContent     =
+    nome.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+}
+function getNome()  { return document.getElementById('inputNome').value.trim() || 'Condòmino'; }
+function getCondo() { return document.getElementById('inputCondominio').value.trim() || 'Condominio'; }
+
+// ── Carica conversazioni (tickets di questo utente) ───────────────────────────
+async function caricaConversazioni() {
+  try {
+    const r    = await fetch('/api/tickets');
+    const data = await r.json();
+    const nome  = getNome().toLowerCase();
+    const condo = getCondo().toLowerCase();
+    // Filtra per questo utente (confronto case-insensitive)
+    state.mioTickets = (data.tickets || []).filter(t =>
+      t.condomino.toLowerCase() === nome &&
+      t.condominio.toLowerCase() === condo
+    );
+    renderConvList();
+    // Aggiorna polling per ticket aperti
+    state.mioTickets.filter(t => t.stato === 'aperta' || t.stato === 'in_gestione')
+      .forEach(t => avviaPolling(t.id));
+  } catch {}
+}
+
+function renderConvList() {
+  const list = document.getElementById('convList');
+  if (!state.mioTickets.length) {
+    list.innerHTML = '<div class="conv-list-empty">Nessuna conversazione.<br>Clicca "+ Nuova" per iniziare.</div>';
+    return;
+  }
+  list.innerHTML = state.mioTickets.map(t => {
+    const isActive = state.convAttiva && state.convAttiva.id === t.id;
+    const ora = new Date(t.timestamp).toLocaleString('it-IT', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const preview = (t.messaggio || '').slice(0, 48) + (t.messaggio && t.messaggio.length > 48 ? '…' : '');
+    const statoLabel = { chiusa:'✓ Chiusa AI', aperta:'In attesa', in_gestione:'In gestione', chiusa_admin:'✓ Risposta admin' }[t.stato] || t.stato;
+    return `<div class="conv-item${isActive ? ' active' : ''}" onclick="apriConversazione('${t.id}')">
+      <div class="conv-item-top">
+        <span class="conv-item-id">${t.id}</span>
+        <span class="conv-item-stato stato-${t.stato}">${statoLabel}</span>
+      </div>
+      <div class="conv-item-preview">${escapaHtml(preview)}</div>
+      <div class="conv-item-meta">${ora}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Reset sessione ───────────────────────────────────────────────────────────
+async function resetSessione() {
+  if (!confirm('Cancellare tutte le conversazioni? Questa azione non è reversibile.')) return;
+  await fetch('/api/tickets', { method: 'DELETE' });
+  state.convAttiva = null;
+  state.modalita   = null;
+  Object.values(state.pollingMap).forEach(iv => clearInterval(iv));
+  state.pollingMap = {};
+  state.mioTickets = [];
+  renderConvList();
+  document.getElementById('chatPlaceholder').style.display = 'flex';
+  document.getElementById('chatActive').style.display = 'none';
+}
+
+// ── Nuova conversazione ───────────────────────────────────────────────────────
+function nuovaConversazione() {
+  state.convAttiva = null;
+  state.modalita   = 'nuova';
+
+  // Deseleziona lista
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+
+  // Mostra chat
+  document.getElementById('chatPlaceholder').style.display = 'none';
+  const active = document.getElementById('chatActive');
+  active.style.display = 'flex';
+
+  // Svuota messaggi, mostra quick actions
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('quickActions').style.display = 'flex';
+  document.getElementById('chatInput').disabled = false;
+  document.getElementById('sendBtn').disabled   = false;
+  document.getElementById('chatInput').value    = '';
+  document.getElementById('chatInput').focus();
+}
+
+// ── Apri conversazione esistente ──────────────────────────────────────────────
+function apriConversazione(ticketId) {
+  const ticket = state.mioTickets.find(t => t.id === ticketId);
+  if (!ticket) return;
+
+  state.convAttiva = ticket;
+  state.modalita   = 'storico';
+
+  // Evidenzia nella lista
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector('.conv-item[onclick*="' + ticketId + '"]');
+  if (el) el.classList.add('active');
+
+  // Mostra pannello chat
+  document.getElementById('chatPlaceholder').style.display = 'none';
+  const active = document.getElementById('chatActive');
+  active.style.display = 'flex';
+
+  // Nascondi quick actions per storico
+  document.getElementById('quickActions').style.display = 'none';
+
+  // Renderizza la conversazione
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  (ticket.conversazione || []).forEach(m => {
+    if (m.role === 'user')      renderMsg(container, 'user',  m.content);
+    else if (m.role === 'assistant') renderMsg(container, 'ai', m.content, { fonti: ticket.fonti });
+    else if (m.role === 'admin') renderMsgAdmin(container, m.content, m.timestamp);
+  });
+  container.scrollTop = container.scrollHeight;
+
+  // Input: disabilitato per storico chiuso, abilitato per aperto
+  const aperto = ticket.stato === 'aperta' || ticket.stato === 'in_gestione';
+  document.getElementById('chatInput').disabled = !aperto || ticket.rispostaAdmin;
+  document.getElementById('sendBtn').disabled   = !aperto || ticket.rispostaAdmin;
+  if (aperto && !ticket.rispostaAdmin) {
+    document.getElementById('chatInput').placeholder = 'Aggiungi un messaggio…';
+  } else {
+    document.getElementById('chatInput').placeholder = 'Conversazione chiusa';
+  }
+}
+
+// ── Setup input ───────────────────────────────────────────────────────────────
+function setupInput() {
+  const inp = document.getElementById('chatInput');
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); invia(); }
+  });
+  document.getElementById('sendBtn').addEventListener('click', invia);
+  document.querySelectorAll('.chat-quick-btn').forEach(b => {
+    b.addEventListener('click', () => { inp.value = b.dataset.text; inp.focus(); });
+  });
+}
+
+// ── Invia messaggio ───────────────────────────────────────────────────────────
+async function invia() {
+  const inp   = document.getElementById('chatInput');
+  const testo = inp.value.trim();
+  if (!testo) return;
+
+  const nome  = getNome();
+  const condo = getCondo();
+
+  // Nascondi quick actions dopo il primo invio
+  document.getElementById('quickActions').style.display = 'none';
+
+  const container = document.getElementById('chatMessages');
+  renderMsg(container, 'user', testo);
+  inp.value = ''; inp.style.height = 'auto';
+  inp.disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  const typingId = aggiungiTyping(container);
+
+  try {
+    const history = state.convAttiva
+      ? (state.convAttiva.conversazione || []).map(m => ({ role: m.role === 'admin' ? 'assistant' : m.role, content: m.content }))
+      : [];
+
+    const r    = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messaggio: testo, condomino: nome, condominio: condo, history })
+    });
+    const data = await r.json();
+    rimuoviTyping(typingId);
+
+    if (data.errore) {
+      renderMsg(container, 'errore', data.errore);
+      inp.disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+    } else {
+      renderMsg(container, 'ai', data.risposta, { fonti: data.fonti, autoGestita: data.autoGestita, ticket: data.ticket, categoria: data.categoria, priorita: data.priorita, durataMs: data.durataMs });
+
+      // Input: chiudi se AI ha gestito, lascia aperto se escalato
+      if (data.autoGestita) {
+        inp.disabled = true;
+        inp.placeholder = 'Conversazione chiusa';
+        document.getElementById('sendBtn').disabled = true;
+      } else {
+        inp.disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        avviaPolling(data.ticket);
+      }
+
+      // Ricarica lista per aggiornare
+      await caricaConversazioni();
+      // Segna conv attiva
+      state.convAttiva = state.mioTickets.find(t => t.id === data.ticket) || null;
+      renderConvList();
+      // Ri-evidenzia
+      if (data.ticket) {
+        const el = document.querySelector('.conv-item[onclick*="' + data.ticket + '"]');
+        if (el) el.classList.add('active');
+      }
+    }
+  } catch (err) {
+    rimuoviTyping(typingId);
+    renderMsg(container, 'errore', 'Errore di rete: ' + err.message);
+    inp.disabled = false;
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+
+// ── Polling risposta admin ────────────────────────────────────────────────────
+function avviaPolling(ticketId) {
+  if (state.pollingMap[ticketId]) return;
+  const iv = setInterval(async () => {
+    try {
+      const r = await fetch('/api/tickets/' + ticketId);
+      const t = await r.json();
+      if (t.rispostaAdmin) {
+        clearInterval(state.pollingMap[ticketId]);
+        delete state.pollingMap[ticketId];
+        // Aggiorna lista
+        await caricaConversazioni();
+        // Se questa conv è quella aperta, mostra la risposta
+        if (state.convAttiva && state.convAttiva.id === ticketId) {
+          const container = document.getElementById('chatMessages');
+          renderMsgAdmin(container, t.rispostaAdmin, t.rispostaAdminAt);
+          document.getElementById('chatInput').disabled = true;
+          document.getElementById('chatInput').placeholder = 'Conversazione chiusa';
+          document.getElementById('sendBtn').disabled = true;
+        }
+      }
+    } catch {}
+  }, 4000);
+  state.pollingMap[ticketId] = iv;
+}
+
+// ── Render messaggi ───────────────────────────────────────────────────────────
+function renderMsg(container, tipo, testo, meta) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + tipo + ' fade-in';
+  const ora = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  let html = '<div class="msg-bubble">' + escapaHtml(testo) + '</div>';
+
+  if (tipo === 'ai' && meta) {
+    if (meta.fonti && meta.fonti.length) {
+      html += '<div class="msg-fonti">' +
+        meta.fonti.map(f => '<span class="fonte-tag">📄 ' + escapaHtml(f) + '</span>').join('') +
+        '</div>';
+    }
+    if (meta.ticket) {
+      const sc = meta.autoGestita ? 'chiusa' : 'aperta';
+      const sl = meta.autoGestita ? '✓ Gestita dall\'AI' : '↗ Inoltrata all\'amministratore';
+      html += '<div class="msg-badges">';
+      if (meta.categoria) html += '<span class="badge badge-' + meta.categoria + '">' + labelCat(meta.categoria) + '</span>';
+      if (meta.priorita)  html += '<span class="badge badge-' + meta.priorita  + '">' + labelPri(meta.priorita)  + '</span>';
+      html += '</div>';
+      html += '<span class="ticket-pill ' + sc + '">' + sl + ' · ' + meta.ticket + '</span>';
+    }
+  }
+
+  html += '<div class="msg-time">' + ora + (meta && meta.durataMs ? ' · ' + (meta.durataMs/1000).toFixed(1) + 's' : '') + '</div>';
+  div.innerHTML = html;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderMsgAdmin(container, testo, timestamp) {
+  const div = document.createElement('div');
+  div.className = 'msg admin fade-in';
+  const ora = timestamp
+    ? new Date(timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  div.innerHTML =
+    '<div class="msg-bubble">' + escapaHtml(testo) + '</div>' +
+    '<div class="msg-badges"><span class="badge" style="background:#FAF4EC;color:#7A5A2A;">👨‍💼 Risposta Amministratore</span></div>' +
+    '<div class="msg-time">' + ora + '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function aggiungiTyping(container) {
+  const id  = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = id;
+  div.innerHTML = '<div class="msg-bubble" style="padding:10px 14px;"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+function rimuoviTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+function labelCat(c) { return { documentale:'📄 Documentale', amministrativa:'💶 Amministrativa', informativa:'ℹ️ Informativa', segnalazione:'⚠️ Segnalazione' }[c] || c; }
+function labelPri(p) { return { urgente:'🔴 Urgente', alta:'🟠 Alta', normale:'Normale', bassa:'Bassa' }[p] || p; }
+function escapaHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

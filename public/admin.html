@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WikiLocal — Dashboard Amministratore</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 520px; max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    .modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 { font-family: var(--font-serif); font-size: 1.15rem; color: var(--green-dark); }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem;
+      cursor: pointer; color: var(--text-muted); padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .modal-close:hover { background: var(--cream); }
+
+    .conv-item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--cream-dark);
+    }
+    .conv-item:last-child { border-bottom: none; }
+    .conv-role { font-size: .72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .04em; }
+    .conv-role.user-role { color: var(--green-dark); }
+    .conv-role.ai-role   { color: var(--sand); }
+    .conv-text { font-size: .85rem; color: var(--text-main); line-height: 1.55; white-space: pre-wrap; }
+
+    .note-area {
+      width: 100%; margin-top: 8px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans); font-size: .84rem;
+      resize: vertical; min-height: 64px;
+      outline: none; transition: border-color var(--transition);
+    }
+    .note-area:focus { border-color: var(--green-dark); }
+
+    /* Sezione risposta admin */
+    .risposta-admin-box {
+      background: var(--sand-pale);
+      border: 1.5px solid var(--sand-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .risposta-admin-box .ra-label {
+      font-size: .72rem; font-weight: 600; color: #7A5A2A;
+      letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .risposta-admin-box .ra-inviata {
+      background: var(--white); border-radius: var(--radius-sm);
+      padding: 10px 12px; font-size: .84rem; color: var(--text-main);
+      line-height: 1.55; border-left: 3px solid var(--sand);
+    }
+    .risposta-admin-box textarea {
+      width: 100%; padding: 9px 11px;
+      border: 1.5px solid var(--sand-light);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans); font-size: .84rem;
+      resize: vertical; min-height: 80px;
+      outline: none; background: var(--white);
+      transition: border-color var(--transition);
+    }
+    .risposta-admin-box textarea:focus { border-color: var(--sand); }
+    .conv-role.admin-role { color: #5A3E10; }
+  </style>
+</head>
+<body>
+<div class="admin-page">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo" style="text-decoration:none;">
+        <div class="logo-icon" style="width:30px;height:30px;font-size:15px;border-radius:8px;">📚</div>
+        <span class="logo-text" style="font-size:1.1rem;">
+          <span class="condo">Wiki</span><span class="care">Local</span>
+        </span>
+      </a>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">MB</div>
+      <div class="sidebar-user-info">
+        <div class="name">Marco Bianchi</div>
+        <div class="role">Amministratore</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Gestione</div>
+      <div class="nav-item active">
+        <span class="nav-item-icon">📋</span>
+        <span>Richieste</span>
+        <span class="nav-badge" id="navBadge" style="display:none;">0</span>
+      </div>
+      <a href="docs.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-item-icon">📄</span>
+        <span>Documenti</span>
+      </a>
+      <div class="nav-item">
+        <span class="nav-item-icon">🏢</span>
+        <span>Condomìni</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">👥</span>
+        <span>Condòmini</span>
+      </div>
+
+      <div class="nav-section-label" style="margin-top:12px;">Finanza</div>
+      <div class="nav-item">
+        <span class="nav-item-icon">💶</span>
+        <span>Pagamenti</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">📊</span>
+        <span>Rendiconto</span>
+      </div>
+
+      <div class="nav-section-label" style="margin-top:12px;">Comunicazioni</div>
+      <div class="nav-item">
+        <span class="nav-item-icon">📅</span>
+        <span>Assemblee</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">📣</span>
+        <span>Circolari</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="color:rgba(255,255,255,.4);font-size:.72rem;margin-bottom:8px;text-align:center;">
+        <span class="live-dot" id="liveDot">Connessione live...</span>
+      </div>
+      <button class="sidebar-reset-btn" id="resetBtn">↺ Azzera tutti i ticket</button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══════════════════════════════════════════════════ -->
+  <main class="admin-main" style="min-height:0;">
+
+    <div class="admin-main-header">
+      <div class="admin-greeting">
+        <h2 id="greeting">Buongiorno, Marco 👋</h2>
+      </div>
+      <div class="admin-sub" id="adminSub">Caricamento...</div>
+    </div>
+
+    <!-- Filtri + Reset -->
+    <div class="admin-filters" style="justify-content:space-between;align-items:center;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="filtriInner">
+      <button class="filter-btn active" data-filter="tutte">Tutte</button>
+      <button class="filter-btn" data-filter="urgenti">🔴 Urgenti</button>
+      <button class="filter-btn" data-filter="in_attesa">In attesa</button>
+      <button class="filter-btn" data-filter="gestite_ai">✦ Gestite dall'AI</button>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="resetTickets()" style="white-space:nowrap;flex-shrink:0;">↺ Azzera tutto</button>
+    </div>
+
+    <!-- Lista richieste -->
+    <div class="requests-list" id="requestsList" style="flex:1;overflow-y:auto;min-height:0;">
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>Nessuna richiesta</h3>
+        <p>Le richieste dei condòmini appariranno qui in tempo reale.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══ PANEL DESTRO ══════════════════════════════════════════ -->
+  <aside class="admin-panel">
+
+    <!-- Panoramica -->
+    <div>
+      <div class="panel-title">Panoramica oggi</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="num" id="stat-totali">—</div>
+          <div class="lbl">Richieste<br>ricevute</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="num" id="stat-percentuale">—</div>
+          <div class="lbl">Gestite<br>dall'AI</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-ai">—</div>
+          <div class="lbl">Chiuse<br>automaticamente</div>
+        </div>
+        <div class="stat-card" id="stat-urgenti-card">
+          <div class="num" id="stat-urgenti">—</div>
+          <div class="lbl">Urgenti<br>in attesa</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <div>
+      <div class="panel-title">In attesa</div>
+      <div style="font-size:2.4rem;font-family:var(--font-serif);color:var(--green-dark);font-weight:600;" id="stat-attesa">—</div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px;">da gestire dal professionista</div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <!-- Distribuzione categorie -->
+    <div>
+      <div class="panel-title">Per categoria</div>
+      <div class="cat-list">
+        <div class="cat-row">
+          <span class="cat-label">⚠️ Segnalazione</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" id="bar-segnalazione" style="background:var(--red);width:0%"></div></div>
+          <span class="cat-num" id="num-segnalazione">0</span>
+        </div>
+        <div class="cat-row">
+          <span class="cat-label">💶 Amministrativa</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" id="bar-amministrativa" style="background:var(--sand);width:0%"></div></div>
+          <span class="cat-num" id="num-amministrativa">0</span>
+        </div>
+        <div class="cat-row">
+          <span class="cat-label">📄 Documentale</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" id="bar-documentale" style="background:var(--blue-steel);width:0%"></div></div>
+          <span class="cat-num" id="num-documentale">0</span>
+        </div>
+        <div class="cat-row">
+          <span class="cat-label">ℹ️ Informativa</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" id="bar-informativa" style="background:var(--green-light);width:0%"></div></div>
+          <span class="cat-num" id="num-informativa">0</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <!-- Messaggio chiave -->
+    <div style="padding:14px 16px;background:var(--green-dark);border-radius:var(--radius-md);">
+      <div style="color:var(--sand);font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;">WikiLocal AI</div>
+      <div style="color:rgba(255,255,255,.85);font-size:.82rem;line-height:1.55;font-family:var(--font-serif);font-style:italic;">
+        "L'AI gestisce il volume.<br>Tu mantieni il controllo e gestisci le decisioni."
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- ══ MODAL DETTAGLIO TICKET ════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalTitolo">Ticket</h3>
+        <div id="modalMeta" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;"></div>
+      </div>
+      <button class="modal-close" onclick="chiudiModal()">✕</button>
+    </div>
+
+    <!-- Info ticket -->
+    <div id="modalInfo" style="background:var(--cream);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:.83rem;"></div>
+
+    <!-- Conversazione -->
+    <div class="panel-title">Conversazione</div>
+    <div id="modalConv" style="margin-bottom:16px;"></div>
+
+    <!-- Risposta AI -->
+    <div id="modalRispostaAI" style="display:none;margin-bottom:16px;">
+      <div class="panel-title">Risposta generata dall'AI</div>
+      <div id="modalRispostaAIText" style="background:var(--sand-pale);border:1px solid var(--sand-light);border-radius:var(--radius-sm);padding:12px;font-size:.84rem;line-height:1.55;color:#5A3E10;"></div>
+    </div>
+
+    <!-- Risposta all'utente -->
+    <div class="risposta-admin-box" id="rispostaAdminBox">
+      <div class="ra-label">✉️ Risposta al condòmino</div>
+      <div id="rispostaAdminInviata" style="display:none;"></div>
+      <textarea id="rispostaAdminTesto" placeholder="Scrivi qui la risposta da inviare al condòmino..."></textarea>
+      <div style="margin-top:8px;font-size:.75rem;color:#9A7A50;">
+        Il condòmino vedrà questa risposta nella sua chat. Il ticket verrà chiuso automaticamente.
+      </div>
+    </div>
+
+    <!-- Note admin (interne, non visibili al condòmino) -->
+    <div style="margin-bottom:16px;">
+      <div class="panel-title">Note interne <span style="font-size:.73rem;color:var(--text-muted);font-family:var(--font-sans);font-weight:400;">(non visibili al condòmino)</span></div>
+      <textarea class="note-area" id="modalNote" placeholder="Aggiungi note interne..."></textarea>
+    </div>
+
+    <!-- Azioni -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="modalAzioni"></div>
+  </div>
+</div>
+
+<script>
+// ── Stato ──────────────────────────────────────────────────────────────
+let allTickets   = [];
+let filtroAttivo = 'tutte';
+let ticketAperto = null;
+
+// ── Init ───────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  aggiornaGreeting();
+  connettiSSE();
+  setupFiltri();
+  document.getElementById('resetBtn').addEventListener('click', resetTickets);
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) chiudiModal();
+  });
+});
+
+function aggiornaGreeting() {
+  const h = new Date().getHours();
+  const saluto = h < 12 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  document.getElementById('greeting').textContent = `${saluto}, Marco 👋`;
+}
+
+// ── SSE ────────────────────────────────────────────────────────────────
+function connettiSSE() {
+  const es  = new EventSource('/api/tickets-stream');
+  const dot = document.getElementById('liveDot');
+
+  es.addEventListener('update', e => {
+    const { tickets, kpi } = JSON.parse(e.data);
+    allTickets = tickets;
+    renderKPI(kpi);
+    renderTickets();
+    dot.textContent = 'Aggiornamento live';
+    dot.className   = 'live-dot';
+  });
+
+  es.onerror = () => {
+    dot.textContent = 'Connessione persa';
+    dot.className   = '';
+    dot.style.color = 'rgba(255,80,60,.6)';
+    setTimeout(connettiSSE, 5000);
+    es.close();
+  };
+}
+
+// ── KPI ────────────────────────────────────────────────────────────────
+function renderKPI(kpi) {
+  document.getElementById('stat-totali').textContent     = kpi.totali;
+  document.getElementById('stat-percentuale').textContent = kpi.percentuale + '%';
+  document.getElementById('stat-ai').textContent         = kpi.gestiteAI;
+  document.getElementById('stat-urgenti').textContent    = kpi.urgenti;
+  document.getElementById('stat-attesa').textContent     = kpi.inAttesa;
+
+  const badge = document.getElementById('navBadge');
+  if (kpi.inAttesa > 0) { badge.textContent = kpi.inAttesa; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+
+  const urgCard = document.getElementById('stat-urgenti-card');
+  urgCard.style.background = kpi.urgenti > 0 ? 'var(--red-pale)' : '';
+  urgCard.querySelector('.num').style.color = kpi.urgenti > 0 ? 'var(--red)' : '';
+
+  // Sub header
+  const oggi = kpi.oggi_count;
+  document.getElementById('adminSub').textContent =
+    `Oggi ${oggi} richiest${oggi === 1 ? 'a' : 'e'} · ${kpi.inAttesa} in attesa · AI ha gestito il ${kpi.percentuale}%`;
+
+  // Barre categorie
+  const cat = kpi.categorie;
+  const max = Math.max(...Object.values(cat), 1);
+  for (const [k, v] of Object.entries(cat)) {
+    const bar = document.getElementById('bar-' + k);
+    const num = document.getElementById('num-' + k);
+    if (bar) bar.style.width = Math.round((v / max) * 100) + '%';
+    if (num) num.textContent = v;
+  }
+}
+
+// ── Lista ticket ────────────────────────────────────────────────────────
+function setupFiltri() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filtroAttivo = btn.dataset.filter;
+      renderTickets();
+    });
+  });
+}
+
+function filtraTickets(tickets) {
+  switch (filtroAttivo) {
+    case 'urgenti':    return tickets.filter(t => t.priorita === 'urgente');
+    case 'in_attesa':  return tickets.filter(t => t.stato === 'aperta' || t.stato === 'in_gestione');
+    case 'gestite_ai': return tickets.filter(t => t.gestitoDa === 'AI');
+    default:           return tickets;
+  }
+}
+
+function renderTickets() {
+  const list    = document.getElementById('requestsList');
+  const visibili = filtraTickets(allTickets);
+
+  if (!visibili.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>Nessuna richiesta</h3><p>Le richieste dei condòmini appariranno qui in tempo reale.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  for (const t of visibili) {
+    const card = document.createElement('div');
+    card.className = `req-card priority-${t.priorita} status-${t.stato}`;
+    card.dataset.id = t.id;
+
+    const ora = new Date(t.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    const data = new Date(t.timestamp).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+    const isAI  = t.gestitoDa === 'AI';
+
+    card.innerHTML = `
+      <div class="req-card-header" onclick="apriTicket('${t.id}')">
+        <div class="req-card-main">
+          <div class="req-card-top">
+            <span class="badge badge-${t.priorita}">${labelPriorita(t.priorita)}</span>
+            <span class="badge badge-${t.categoria}">${labelCategoria(t.categoria)}</span>
+            <span class="badge badge-${t.stato}">${labelStato(t.stato)}</span>
+            ${isAI ? `<span class="ai-tag">✦ AI</span>` : ''}
+          </div>
+          <div class="req-card-text">${escapaHtml(t.messaggio)}</div>
+          <div class="req-card-meta">
+            <span>👤 ${t.condomino}</span>
+            <span>🏢 ${t.condominio}</span>
+            <span>🕐 ${data} ${ora}</span>
+            <span style="color:var(--text-light)">${t.id}</span>
+          </div>
+        </div>
+      </div>
+      <div class="req-card-actions">
+        ${t.stato === 'aperta' ? `<button class="btn btn-primary btn-sm" onclick="prendiInCarico('${t.id}', event)">Prendi in carico</button>` : ''}
+        ${t.stato === 'in_gestione' ? `<button class="btn btn-secondary btn-sm" onclick="chiudiTicket('${t.id}', event)">Chiudi</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="apriTicket('${t.id}')">Dettaglio →</button>
+      </div>`;
+
+    list.appendChild(card);
+  }
+}
+
+// ── Azioni ticket ──────────────────────────────────────────────────────
+async function prendiInCarico(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stato: 'in_gestione', gestitoDa: 'Amministratore' })
+  });
+}
+
+async function chiudiTicket(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stato: 'chiusa_admin', gestitoDa: 'Amministratore' })
+  });
+}
+
+async function resetTickets() {
+  if (!confirm('Azzerare tutte le richieste e conversazioni? Questa azione non è reversibile.')) return;
+  await fetch('/api/tickets', { method: 'DELETE' });
+}
+
+// ── Modal dettaglio ────────────────────────────────────────────────────
+async function apriTicket(id) {
+  const r    = await fetch(`/api/tickets/${id}`);
+  const t    = await r.json();
+  ticketAperto = t;
+
+  document.getElementById('modalTitolo').textContent = `${t.id} · ${t.condomino}`;
+
+  document.getElementById('modalMeta').innerHTML = `
+    <span class="badge badge-${t.priorita}">${labelPriorita(t.priorita)}</span>
+    <span class="badge badge-${t.categoria}">${labelCategoria(t.categoria)}</span>
+    <span class="badge badge-${t.stato}">${labelStato(t.stato)}</span>
+    ${t.gestitoDa === 'AI' ? '<span class="ai-tag">✦ Gestita dall\'AI</span>' : ''}
+  `;
+
+  const ora = new Date(t.timestamp).toLocaleString('it-IT');
+  document.getElementById('modalInfo').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div><strong style="color:var(--text-muted);font-size:.72rem;">CONDÒMINO</strong><br>${t.condomino}</div>
+      <div><strong style="color:var(--text-muted);font-size:.72rem;">CONDOMINIO</strong><br>${t.condominio}</div>
+      <div><strong style="color:var(--text-muted);font-size:.72rem;">GESTITO DA</strong><br>${t.gestitoDa}</div>
+      <div><strong style="color:var(--text-muted);font-size:.72rem;">RICEVUTO</strong><br>${ora}</div>
+    </div>`;
+
+  // Conversazione
+  const conv = document.getElementById('modalConv');
+  conv.innerHTML = (t.conversazione || []).map(m => {
+    let roleClass = 'ai-role', roleLabel = '🤖 WikiLocal AI';
+    if (m.role === 'user')  { roleClass = 'user-role';  roleLabel = '👤 ' + t.condomino; }
+    if (m.role === 'admin') { roleClass = 'admin-role'; roleLabel = '👨‍💼 Amministratore'; }
+    return `<div class="conv-item">
+      <div class="conv-role ${roleClass}">${roleLabel}</div>
+      <div class="conv-text">${escapaHtml(m.content)}</div>
+    </div>`;
+  }).join('') || '<p style="color:var(--text-muted);font-size:.83rem;">Nessuna conversazione registrata.</p>';
+
+  // Risposta admin già inviata
+  const boxInviata  = document.getElementById('rispostaAdminInviata');
+  const boxTextarea = document.getElementById('rispostaAdminTesto');
+  if (t.rispostaAdmin) {
+    boxInviata.style.display = 'block';
+    boxInviata.innerHTML = `<div class="ra-inviata">✉️ Risposta inviata il ${new Date(t.rispostaAdminAt).toLocaleString('it-IT')}:<br><br>${escapaHtml(t.rispostaAdmin)}</div>`;
+    boxTextarea.style.display = 'none';
+  } else {
+    boxInviata.style.display = 'none';
+    boxTextarea.style.display = 'block';
+    boxTextarea.value = '';
+  }
+
+  // Note
+  document.getElementById('modalNote').value = t.noteAdmin || '';
+
+  // Azioni
+  const azioni = document.getElementById('modalAzioni');
+  azioni.innerHTML = '';
+  if (t.stato === 'aperta') {
+    azioni.innerHTML += `<button class="btn btn-secondary btn-sm" onclick="prendiInCaricoModal('${t.id}')">Prendi in carico</button>`;
+  }
+  if (!t.rispostaAdmin) {
+    azioni.innerHTML += `<button class="btn btn-primary btn-sm" onclick="inviaRispostaAdmin('${t.id}')">✉️ Invia risposta al condòmino</button>`;
+  }
+  azioni.innerHTML += `<button class="btn btn-secondary btn-sm" onclick="salvaNoteModal('${t.id}')">Salva note</button>`;
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function chiudiModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  ticketAperto = null;
+}
+
+async function prendiInCaricoModal(id) {
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stato: 'in_gestione', gestitoDa: 'Amministratore' })
+  });
+  chiudiModal();
+}
+
+async function chiudiTicketModal(id) {
+  const note = document.getElementById('modalNote').value;
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stato: 'chiusa_admin', gestitoDa: 'Amministratore', noteAdmin: note })
+  });
+  chiudiModal();
+}
+
+async function salvaNoteModal(id) {
+  const note = document.getElementById('modalNote').value;
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ noteAdmin: note })
+  });
+  chiudiModal();
+}
+
+async function inviaRispostaAdmin(id) {
+  const testo = document.getElementById('rispostaAdminTesto').value.trim();
+  if (!testo) { alert('Scrivi una risposta prima di inviare.'); return; }
+
+  const note = document.getElementById('modalNote').value;
+  await fetch(`/api/tickets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      rispostaAdmin: testo,
+      noteAdmin: note || null
+    })
+  });
+  chiudiModal();
+}
+
+// ── Label helpers ──────────────────────────────────────────────────────
+function labelCategoria(c) {
+  return { documentale: '📄 Documentale', amministrativa: '💶 Amministrativa', informativa: 'ℹ️ Informativa', segnalazione: '⚠️ Segnalazione' }[c] || c;
+}
+function labelPriorita(p) {
+  return { urgente: '🔴 Urgente', alta: '🟠 Alta', normale: 'Normale', bassa: 'Bassa' }[p] || p;
+}
+function labelStato(s) {
+  return { aperta: 'Da gestire', in_gestione: 'In gestione', chiusa: 'Chiusa (AI)', chiusa_admin: 'Chiusa (Admin)' }[s] || s;
+}
+function escapaHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WikiLocal — Powered by CondoCare</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .index-page { position: relative; overflow: hidden; }
+    .index-page::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 20%, rgba(196,168,130,.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .index-scroll-hint {
+      position: absolute; bottom: 28px;
+      color: rgba(255,255,255,.3); font-size: .75rem;
+      letter-spacing: .04em; text-align: center; width: 100%;
+    }
+    .status-strip {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 16px;
+      font-size: .78rem; color: rgba(255,255,255,.45);
+    }
+    .status-strip .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #888;
+    }
+    .status-strip .dot.online  { background: #6AC99A; animation: pulse-dot 2s infinite; }
+    .status-strip .dot.offline { background: #E07060; }
+  </style>
+</head>
+<body>
+  <div class="index-page">
+
+    <!-- Logo -->
+    <div class="logo-wrapper">
+      <div class="logo-icon" style="margin:0 auto 10px;">📚</div>
+      <div class="logo-text" style="text-align:center;">
+        <span class="condo">Wiki</span><span class="care">Local</span>
+      </div>
+      <div class="index-tagline">Rispondi ai tuoi condòmini con AI locale, privata e gratuita.</div>
+      <div class="status-strip">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusLabel">Controllo Ollama...</span>
+        &nbsp;·&nbsp;
+        <span id="docsLabel">Caricamento documenti...</span>
+      </div>
+    </div>
+
+    <!-- Role selection -->
+    <div class="index-cards">
+
+      <a href="condomino.html" class="index-card">
+        <div class="index-card-icon">🏠</div>
+        <h2>Sono un condòmino</h2>
+        <p>Fai una richiesta, segnala un problema o chiedi informazioni. L'AI risponde in tempo reale basandosi sui documenti del tuo condominio.</p>
+        <div class="btn btn-sand" style="pointer-events:none;">Accedi alla chat →</div>
+      </a>
+
+      <a href="admin.html" class="index-card">
+        <div class="index-card-icon">📊</div>
+        <h2>Sono un amministratore</h2>
+        <p>Gestisci le richieste. L'AI risponde autonomamente a quelle standard e ti scala solo i casi che richiedono il tuo intervento.</p>
+        <div class="btn btn-sand" style="pointer-events:none;">Apri la dashboard →</div>
+      </a>
+
+    </div>
+
+    <!-- KPI strip -->
+    <div class="index-kpi">
+      <div class="index-kpi-item">
+        <div class="num">100%</div>
+        <div class="lbl">locale<br>e privato</div>
+      </div>
+      <div class="index-kpi-item">
+        <div class="num">€0</div>
+        <div class="lbl">costo<br>per query</div>
+      </div>
+      <div class="index-kpi-item">
+        <div class="num">PDF</div>
+        <div class="lbl">DOCX · TXT<br>supportati</div>
+      </div>
+      <div class="index-kpi-item">
+        <div class="num">H24</div>
+        <div class="lbl">disponibile<br>sempre</div>
+      </div>
+    </div>
+
+    <div class="index-scroll-hint">WikiLocal · Powered by Ollama · Workflow CondoCare</div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const dot   = document.getElementById('statusDot');
+      const label = document.getElementById('statusLabel');
+      const docs  = document.getElementById('docsLabel');
+
+      try {
+        const [sr, dr] = await Promise.all([fetch('/api/status'), fetch('/api/docs')]);
+        const sd = await sr.json();
+        const dd = await dr.json();
+
+        if (sd.ollamaOnline && sd.modelloPresente) {
+          dot.className  = 'dot online';
+          label.textContent = `Ollama pronto · ${sd.modelloCorrente}`;
+        } else if (sd.ollamaOnline) {
+          dot.className  = 'dot offline';
+          label.textContent = `Modello ${sd.modelloCorrente} non scaricato`;
+        } else {
+          dot.className  = 'dot offline';
+          label.textContent = 'Ollama offline — avvia: ollama serve';
+        }
+
+        const n = (dd.files || []).length;
+        docs.textContent = n > 0
+          ? `${n} document${n === 1 ? 'o' : 'i'} nella base di conoscenza`
+          : 'Nessun documento caricato — vai in Dashboard';
+
+      } catch {
+        dot.className   = 'dot offline';
+        label.textContent = 'Errore connessione';
+        docs.textContent  = '';
+      }
+    });
+  </script>
+</body>
+</html>
