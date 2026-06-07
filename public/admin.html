@@ -85,6 +85,37 @@
     }
     .risposta-admin-box textarea:focus { border-color: var(--sand); }
     .conv-role.admin-role { color: #5A3E10; }
+
+    /* Categoria clickable rows */
+    .cat-row {
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid transparent;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .cat-row:hover { background: var(--cream); }
+    .cat-row.cat-active { background: var(--cream); font-weight: 600; }
+    .cat-row.cat-active-segnalazione { border-left-color: var(--red); }
+    .cat-row.cat-active-amministrativa { border-left-color: var(--sand); }
+    .cat-row.cat-active-documentale { border-left-color: var(--blue-steel); }
+    .cat-row.cat-active-informativa { border-left-color: var(--green-light); }
+
+    /* Condomino dropdown */
+    #filtroCondomino {
+      height: 32px;
+      padding: 0 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: .82rem;
+      color: var(--text-main);
+      background: var(--white);
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    #filtroCondomino:focus { border-color: var(--green-dark); }
   </style>
 </head>
 <body>
@@ -175,6 +206,7 @@
       <button class="filter-btn" data-filter="urgenti">🔴 Urgenti</button>
       <button class="filter-btn" data-filter="in_attesa">In attesa</button>
       <button class="filter-btn" data-filter="gestite_ai">✦ Gestite dall'AI</button>
+      <select id="filtroCondomino"><option value="">Tutti i condòmini</option></select>
       </div>
       <button class="btn btn-danger btn-sm" onclick="resetTickets()" style="white-space:nowrap;flex-shrink:0;">↺ Azzera tutto</button>
     </div>
@@ -230,22 +262,22 @@
     <div>
       <div class="panel-title">Per categoria</div>
       <div class="cat-list">
-        <div class="cat-row">
+        <div class="cat-row" data-categoria="segnalazione">
           <span class="cat-label">⚠️ Segnalazione</span>
           <div class="cat-bar-wrap"><div class="cat-bar" id="bar-segnalazione" style="background:var(--red);width:0%"></div></div>
           <span class="cat-num" id="num-segnalazione">0</span>
         </div>
-        <div class="cat-row">
+        <div class="cat-row" data-categoria="amministrativa">
           <span class="cat-label">💶 Amministrativa</span>
           <div class="cat-bar-wrap"><div class="cat-bar" id="bar-amministrativa" style="background:var(--sand);width:0%"></div></div>
           <span class="cat-num" id="num-amministrativa">0</span>
         </div>
-        <div class="cat-row">
+        <div class="cat-row" data-categoria="documentale">
           <span class="cat-label">📄 Documentale</span>
           <div class="cat-bar-wrap"><div class="cat-bar" id="bar-documentale" style="background:var(--blue-steel);width:0%"></div></div>
           <span class="cat-num" id="num-documentale">0</span>
         </div>
-        <div class="cat-row">
+        <div class="cat-row" data-categoria="informativa">
           <span class="cat-label">ℹ️ Informativa</span>
           <div class="cat-bar-wrap"><div class="cat-bar" id="bar-informativa" style="background:var(--green-light);width:0%"></div></div>
           <span class="cat-num" id="num-informativa">0</span>
@@ -314,15 +346,18 @@
 
 <script>
 // ── Stato ──────────────────────────────────────────────────────────────
-let allTickets   = [];
-let filtroAttivo = 'tutte';
-let ticketAperto = null;
+let allTickets    = [];
+let filtroAttivo  = 'tutte';
+let filtroCategoria = null;
+let ticketAperto  = null;
 
 // ── Init ───────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   aggiornaGreeting();
   connettiSSE();
   setupFiltri();
+  setupCategorieFiltro();
+  document.getElementById('filtroCondomino').addEventListener('change', renderTickets);
   document.getElementById('resetBtn').addEventListener('click', resetTickets);
   document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) chiudiModal();
@@ -402,16 +437,52 @@ function setupFiltri() {
   });
 }
 
+function setupCategorieFiltro() {
+  document.querySelectorAll('.cat-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const cat = row.dataset.categoria;
+      if (filtroCategoria === cat) {
+        filtroCategoria = null;
+        row.classList.remove('cat-active', `cat-active-${cat}`);
+      } else {
+        document.querySelectorAll('.cat-row').forEach(r => {
+          r.classList.remove('cat-active', 'cat-active-segnalazione', 'cat-active-amministrativa', 'cat-active-documentale', 'cat-active-informativa');
+        });
+        filtroCategoria = cat;
+        row.classList.add('cat-active', `cat-active-${cat}`);
+      }
+      renderTickets();
+    });
+  });
+}
+
+function aggiornaDropdownCondomini() {
+  const sel = document.getElementById('filtroCondomino');
+  const current = sel.value;
+  const nomi = [...new Set(allTickets.map(t => t.condomino).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Tutti i condòmini</option>' +
+    nomi.map(n => `<option value="${escapaHtml(n)}"${n === current ? ' selected' : ''}>${escapaHtml(n)}</option>`).join('');
+}
+
 function filtraTickets(tickets) {
+  let filtered = tickets;
   switch (filtroAttivo) {
-    case 'urgenti':    return tickets.filter(t => t.priorita === 'urgente');
-    case 'in_attesa':  return tickets.filter(t => t.stato === 'aperta' || t.stato === 'in_gestione');
-    case 'gestite_ai': return tickets.filter(t => t.gestitoDa === 'AI');
-    default:           return tickets;
+    case 'urgenti':    filtered = filtered.filter(t => t.priorita === 'urgente'); break;
+    case 'in_attesa':  filtered = filtered.filter(t => t.stato === 'aperta' || t.stato === 'in_gestione'); break;
+    case 'gestite_ai': filtered = filtered.filter(t => t.gestitoDa === 'AI'); break;
   }
+  if (filtroCategoria) {
+    filtered = filtered.filter(t => t.categoria === filtroCategoria);
+  }
+  const condomino = document.getElementById('filtroCondomino')?.value;
+  if (condomino) {
+    filtered = filtered.filter(t => t.condomino === condomino);
+  }
+  return filtered;
 }
 
 function renderTickets() {
+  aggiornaDropdownCondomini();
   const list    = document.getElementById('requestsList');
   const visibili = filtraTickets(allTickets);
 
