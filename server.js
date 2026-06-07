@@ -347,12 +347,13 @@ async function generaRispostaAI(messaggio, documenti, history, fontiUsate = [], 
     saluto +
     'Tono cordiale, caldo e user-friendly. Italiano. Evita asterischi inutili.\n\n' +
     'Devi rispondere SOLO con JSON valido, senza testo prima o dopo, con questa struttura:\n' +
-    '{"puoRispondere":true,"sicurezza":"alta|media|bassa","risposta":"testo per il condomino","motivazione":"breve motivo","fonti":["nomefile.docx"]}\n\n' +
+    '{"puoRispondere":true,"sicurezza":"alta|media|bassa","risposta":"<saluto caldo con nome utente> + risposta completa in tono cordiale e amichevole","motivazione":"breve motivo","fonti":["nomefile.docx"]}\n\n' +
     'Regole obbligatorie:\n' +
     '- puoRispondere=true solo se la risposta e chiaramente supportata dal contesto.\n' +
     '- sicurezza=alta o media solo se il contesto contiene dati sufficienti.\n' +
     '- se sicurezza=bassa, puoRispondere deve essere false.\n' +
-    '- se puoRispondere=false, la risposta deve dire che la richiesta viene inoltrata all\'amministratore.\n\n' +
+    '- se puoRispondere=false, la risposta deve dire che la richiesta viene inoltrata all\'amministratore.\n' +
+    '- il valore del campo "risposta" DEVE iniziare con un saluto cordiale (es. "Ciao Mario," o "Buongiorno,") e usare tono caldo e amichevole per tutta la risposta.\n\n' +
     'FONTI DISPONIBILI: ' + (fontiUsate.length ? fontiUsate.join(', ') : 'nessuna') + '\n\n' +
     'CONTESTO DOCUMENTALE:\n' + (documenti || '[Nessun contesto documentale disponibile]');
 
