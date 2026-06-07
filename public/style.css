@@ -493,7 +493,10 @@ p  { line-height: 1.65; }
   flex: 1; overflow-y: auto;
   padding: 0 28px 24px;
   display: flex; flex-direction: column; gap: 10px;
+  align-items: flex-start;
+  min-height: 0;
 }
+.requests-list .req-card { width: 100%; }
 
 /* Request card */
 .req-card {
