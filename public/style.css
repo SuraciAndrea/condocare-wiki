@@ -1,25 +1,27 @@
 /* ============================================================
    CondoCare — Design System
-   Brand Kit: Forest Green · Warm Sand · Cream · Steel Blue
-   Font: Playfair Display (titoli) + DM Sans (corpo)
+   Brand Kit: Soft Navy · Dusty Blue · Warm Sand · Cream · Light Mist
+   Font: Fraunces (titoli) + DM Sans (corpo)
    Tono: ordine, semplicità, fiducia, professionalità, serenità
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap');
 
 /* ── Variables ──────────────────────────────────────────── */
+/* I nomi storici (--green-*) sono mantenuti come alias semantici
+   "primario/accento" e rimappati alla palette navy del brand kit. */
 :root {
-  --green-dark:    #2B3A32;
-  --green-mid:     #3D5245;
-  --green-light:   #A8C5B5;
-  --sand:          #C4A882;
-  --sand-light:    #E8D9C4;
-  --sand-pale:     #FAF4EC;
-  --cream:         #F7F3EE;
-  --cream-dark:    #EDE8E1;
+  --green-dark:    #30475A;   /* Soft Navy — primario */
+  --green-mid:     #3E5A70;   /* navy hover */
+  --green-light:   #6C8FA3;   /* Dusty Blue */
+  --sand:          #DCC9A3;   /* Warm Sand */
+  --sand-light:    #ECE0CC;
+  --sand-pale:     #FBF6EE;
+  --cream:         #FAF7F1;   /* Cream */
+  --cream-dark:    #E6EBEF;
   --white:         #FFFFFF;
-  --blue-steel:    #7A9BAA;
-  --blue-pale:     #EBF3F7;
+  --blue-steel:    #6C8FA3;   /* Dusty Blue */
+  --blue-pale:     #DDE5EA;   /* Light Mist */
   --red:           #B83227;
   --red-pale:      #FDECEB;
   --orange:        #C0622A;
@@ -27,7 +29,7 @@
   --text-main:     #2C2C2C;
   --text-muted:    #7A7A7A;
   --text-light:    #A8A8A8;
-  --border:        #E2DDD7;
+  --border:        #DDE5EA;
   --shadow-sm:     0 1px 4px rgba(43,58,50,.07);
   --shadow-md:     0 3px 14px rgba(43,58,50,.10);
   --shadow-lg:     0 8px 28px rgba(43,58,50,.13);
@@ -36,7 +38,7 @@
   --radius-lg:     18px;
   --radius-xl:     24px;
   --sidebar-w:     230px;
-  --font-serif:    'Playfair Display', Georgia, serif;
+  --font-serif:    'Fraunces', Georgia, serif;
   --font-sans:     'DM Sans', system-ui, -apple-system, sans-serif;
   --transition:    .2s ease;
 }
@@ -81,6 +83,19 @@ p  { line-height: 1.65; }
 .logo-text .care  { color: var(--sand); }
 .logo-text.dark .condo { color: var(--green-dark); }
 .logo-text.dark .care  { color: var(--sand); }
+
+/* Logo immagine (contiene già il wordmark "CondoCare").
+   Il file ha sfondo bianco: su header/sidebar navy lo presentiamo come
+   "chip" bianco arrotondato così resta leggibile e pulito. */
+.logo-img {
+  box-sizing: content-box;
+  height: 26px; width: auto; display: block;
+  background: #fff;
+  padding: 5px 9px;
+  border-radius: 9px;
+}
+.logo-img.large { height: 44px; padding: 7px 13px; border-radius: 12px; }
+.logo-img.on-dark { box-shadow: 0 2px 10px rgba(0,0,0,.18); }
 
 /* ── Buttons ────────────────────────────────────────────── */
 .btn {

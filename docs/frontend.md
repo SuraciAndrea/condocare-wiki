@@ -78,17 +78,20 @@ Pagina semplice con:
 ## Design system (`style.css`)
 
 ### Palette colori
+Brand kit CondoCare: Soft Navy · Dusty Blue · Warm Sand · Cream · Light Mist.
+I nomi storici `--green-*` sono mantenuti come alias del primario/accento (navy).
 ```css
---green-dark:  #2B3A32   /* sfondo sidebar, header */
---green-mid:   #3D5245   /* hover elementi sidebar */
---green-light: #A8C5B5   /* accenti secondari */
---sand:        #C4A882   /* accent primario, bottoni */
---sand-light:  #E8D9C4
---sand-pale:   #FAF4EC
---cream:       #F7F3EE   /* sfondo pagina */
---cream-dark:  #EDE8E1
---blue-steel:  #7A9BAA   /* info */
---blue-pale:   #EBF3F7
+--green-dark:  #30475A   /* Soft Navy — sfondo sidebar, header, primario */
+--green-mid:   #3E5A70   /* navy hover */
+--green-light: #6C8FA3   /* Dusty Blue — accenti secondari */
+--sand:        #DCC9A3   /* Warm Sand — accent, bottoni */
+--sand-light:  #ECE0CC
+--sand-pale:   #FBF6EE
+--cream:       #FAF7F1   /* Cream — sfondo pagina */
+--cream-dark:  #E6EBEF
+--blue-steel:  #6C8FA3   /* Dusty Blue — info */
+--blue-pale:   #DDE5EA   /* Light Mist */
+--border:      #DDE5EA   /* Light Mist */
 --red:         #B83227   /* urgente, errori */
 --red-pale:    #FDECEB
 --orange:      #C0622A   /* warning, alta priorità */
@@ -96,8 +99,13 @@ Pagina semplice con:
 ```
 
 ### Tipografia
-- **Titoli:** Playfair Display (serif, da Google Fonts)
+- **Titoli:** Fraunces (serif, da Google Fonts)
 - **Corpo:** DM Sans (sans-serif)
+
+### Logo
+Immagine `public/logo.png` (contiene già il wordmark "CondoCare"), inserita via
+`<img class="logo-img on-dark">`. La classe `.on-dark` la rende bianca sulle
+intestazioni navy.
 
 ### Componenti notevoli
 - **Badge** — colorati per categoria (`documentale`, `amministrativa`, `segnalazione`, `informativa`) e per priorità (`urgente`, `alta`, `normale`, `bassa`)

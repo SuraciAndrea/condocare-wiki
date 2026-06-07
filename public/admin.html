@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WikiLocal — Dashboard Amministratore</title>
+  <title>CondoCare — Dashboard Amministratore</title>
   <link rel="stylesheet" href="style.css">
   <style>
     /* Modal overlay */
@@ -125,10 +125,7 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <a href="index.html" class="logo" style="text-decoration:none;">
-        <div class="logo-icon" style="width:30px;height:30px;font-size:15px;border-radius:8px;">📚</div>
-        <span class="logo-text" style="font-size:1.1rem;">
-          <span class="condo">Wiki</span><span class="care">Local</span>
-        </span>
+        <img class="logo-img on-dark" src="logo.png" alt="CondoCare">
       </a>
     </div>
 
@@ -289,7 +286,7 @@
 
     <!-- Messaggio chiave -->
     <div style="padding:14px 16px;background:var(--green-dark);border-radius:var(--radius-md);">
-      <div style="color:var(--sand);font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;">WikiLocal AI</div>
+      <div style="color:var(--sand);font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;">CondoCare AI</div>
       <div style="color:rgba(255,255,255,.85);font-size:.82rem;line-height:1.55;font-family:var(--font-serif);font-style:italic;">
         "L'AI gestisce il volume.<br>Tu mantieni il controllo e gestisci le decisioni."
       </div>
@@ -580,7 +577,7 @@ async function apriTicket(id) {
   // Conversazione
   const conv = document.getElementById('modalConv');
   conv.innerHTML = (t.conversazione || []).map(m => {
-    let roleClass = 'ai-role', roleLabel = '🤖 WikiLocal AI';
+    let roleClass = 'ai-role', roleLabel = '🤖 CondoCare AI';
     if (m.role === 'user')  { roleClass = 'user-role';  roleLabel = '👤 ' + t.condomino; }
     if (m.role === 'admin') { roleClass = 'admin-role'; roleLabel = '👨‍💼 Amministratore'; }
     return `<div class="conv-item">
