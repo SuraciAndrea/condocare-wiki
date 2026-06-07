@@ -500,7 +500,7 @@ async function invia() {
       inp.disabled = false;
       document.getElementById('sendBtn').disabled = false;
     } else {
-      renderMsg(container, 'ai', data.risposta, { fonti: data.fonti, autoGestita: data.autoGestita, ticket: data.ticket, categoria: data.categoria, priorita: data.priorita, durataMs: data.durataMs });
+      renderMsg(container, 'ai', data.risposta, { fonti: data.fonti, statoTicket: data.autoGestita ? 'chiusa' : 'aperta', ticket: data.ticket, categoria: data.categoria, priorita: data.priorita, durataMs: data.durataMs });
 
       // Ricarica lista per aggiornare
       await caricaConversazioni();
