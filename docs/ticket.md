@@ -26,10 +26,35 @@
   conversazione: [
     { role: "user",      content: "Quando scade...?" },
     { role: "assistant", content: "Il regolamento prevede..." },
-    { role: "admin",     content: "Gentile condòmino..." }  // se presente
+    { role: "admin",     content: "Gentile condòmino..." },                    // se presente
+    { role: "assistant", content: "Hai ottenuto le informazioni?", meta: "followup" }, // conferma chiusura
+    { role: "user",      content: "Sì", meta: "followup" }                     // scelta del condomino
   ]
 }
 ```
+
+Le voci con `meta: "followup"` appartengono al flusso di conferma chiusura lato
+condomino (vedi sotto) e vengono **escluse dalla history** inviata all'AI.
+
+---
+
+## Flusso di conferma chiusura (lato condomino)
+
+Quando l'AI gestisce autonomamente la richiesta (`stato: "chiusa"`,
+`autoGestita: true`), la chat condomino guida la chiusura:
+
+1. Ogni nuova chat si apre con un **messaggio di benvenuto** che invita a scrivere.
+2. Dopo la risposta AI compare la domanda **"Gentile [nome], hai ottenuto le
+   informazioni che cercavi?"** con due tasti **Sì / No** (l'input testuale resta
+   **bloccato** finché non si sceglie).
+3. **Sì** → messaggio di ringraziamento, chat chiusa (il ticket resta `chiusa` da AI).
+4. **No** → la chat resta aperta, il condomino continua a chiedere (nuova richiesta).
+5. **Timeout 20s** senza scelta → ringraziamento + chiusura (come "Sì").
+
+Domanda, scelta e ringraziamento vengono persistiti nel ticket (campo
+`conversazione`, voci con `meta: "followup"`) tramite
+`PATCH /api/tickets/:id` con body `{ appendConversazione: [...] }`, così l'admin
+li vede nello storico.
 
 ---
 

@@ -531,10 +531,13 @@ app.patch('/api/tickets/:id', (req, res) => {
   const tickets = leggiTickets();
   const idx     = tickets.findIndex(t => t.id === req.params.id);
   if (idx === -1) return res.status(404).json({ errore: 'Ticket non trovato.' });
-  const { stato, noteAdmin, gestitoDa, rispostaAdmin } = req.body;
+  const { stato, noteAdmin, gestitoDa, rispostaAdmin, appendConversazione } = req.body;
   if (stato)         tickets[idx].stato          = stato;
   if (noteAdmin)     tickets[idx].noteAdmin       = noteAdmin;
   if (gestitoDa)     tickets[idx].gestitoDa       = gestitoDa;
+  if (Array.isArray(appendConversazione) && appendConversazione.length) {
+    tickets[idx].conversazione = [...(tickets[idx].conversazione || []), ...appendConversazione];
+  }
   if (rispostaAdmin) {
     tickets[idx].rispostaAdmin   = rispostaAdmin;
     tickets[idx].rispostaAdminAt = new Date().toISOString();

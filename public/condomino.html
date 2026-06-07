@@ -148,6 +148,24 @@
       border-bottom-left-radius: 4px;
     }
 
+    /* Follow-up "hai ottenuto le informazioni?" */
+    .followup-actions {
+      display: flex; gap: 10px; margin-top: 8px; padding: 0 2px;
+    }
+    .followup-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 22px;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      font-family: var(--font-sans); font-size: .85rem; font-weight: 600;
+      cursor: pointer; transition: all var(--transition);
+      background: var(--white);
+    }
+    .followup-btn.si  { background: var(--green-dark); color: var(--white); border-color: var(--green-dark); }
+    .followup-btn.si:hover  { background: var(--green-mid); }
+    .followup-btn.no  { color: var(--green-dark); }
+    .followup-btn.no:hover  { border-color: var(--sand); background: var(--sand-pale); }
+    .followup-actions.disabled { opacity: .5; pointer-events: none; }
+
     /* id-wrap */
     .id-wrap {
       padding: 8px 20px;
@@ -249,11 +267,15 @@
 <script>
 // ── Stato ────────────────────────────────────────────────────────────────────
 const state = {
-  convAttiva:    null,   // ticket attivo
-  modalita:      null,   // 'nuova' | 'storico'
-  pollingMap:    {},     // ticketId → intervalId
-  mioTickets:    []      // tickets filtrati per questo utente
+  convAttiva:      null,   // ticket attivo
+  modalita:        null,   // 'nuova' | 'storico'
+  pollingMap:      {},     // ticketId → intervalId
+  mioTickets:      [],     // tickets filtrati per questo utente
+  pendingFollowup: null,   // { ticketId, nome } se in attesa di scelta Sì/No
+  followupTimer:   null    // timer 20s per chiusura automatica
 };
+
+const FOLLOWUP_TIMEOUT_MS = 20000;
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -319,6 +341,7 @@ function renderConvList() {
 // ── Reset sessione ───────────────────────────────────────────────────────────
 async function resetSessione() {
   if (!confirm('Cancellare tutte le conversazioni? Questa azione non è reversibile.')) return;
+  annullaFollowup();
   await fetch('/api/tickets', { method: 'DELETE' });
   state.convAttiva = null;
   state.modalita   = null;
@@ -332,6 +355,7 @@ async function resetSessione() {
 
 // ── Nuova conversazione ───────────────────────────────────────────────────────
 function nuovaConversazione() {
+  annullaFollowup();
   state.convAttiva = null;
   state.modalita   = 'nuova';
 
@@ -344,11 +368,17 @@ function nuovaConversazione() {
   active.style.display = 'flex';
 
   // Svuota messaggi, mostra quick actions
-  document.getElementById('chatMessages').innerHTML = '';
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
   document.getElementById('quickActions').style.display = 'flex';
   document.getElementById('chatInput').disabled = false;
   document.getElementById('sendBtn').disabled   = false;
+  document.getElementById('chatInput').placeholder = 'Scrivi la tua richiesta…';
   document.getElementById('chatInput').value    = '';
+
+  // Messaggio di benvenuto (solo UI, non entra nella history AI)
+  renderMsg(container, 'ai', `Ciao ${getNome()}! 👋 Sono l'assistente virtuale di CondoCare. Scrivi pure la tua richiesta o segnalazione e ti rispondo subito.`);
+
   document.getElementById('chatInput').focus();
 }
 
@@ -357,6 +387,7 @@ function apriConversazione(ticketId) {
   const ticket = state.mioTickets.find(t => t.id === ticketId);
   if (!ticket) return;
 
+  annullaFollowup();
   state.convAttiva = ticket;
   state.modalita   = 'storico';
 
@@ -377,9 +408,13 @@ function apriConversazione(ticketId) {
   const container = document.getElementById('chatMessages');
   container.innerHTML = '';
   const conv = ticket.conversazione || [];
-  const lastAiIdx = conv.reduce((last, m, i) => m.role === 'assistant' ? i : last, -1);
+  // Ultima risposta AI "reale" (esclude le voci di follow-up) per i badge ticket
+  const lastAiIdx = conv.reduce((last, m, i) => (m.role === 'assistant' && !m.meta) ? i : last, -1);
   conv.forEach((m, i) => {
-    if (m.role === 'user') {
+    if (m.meta) {
+      // Voci del flusso di conferma (domanda / Sì-No / ringraziamento): bubble semplici
+      renderMsg(container, m.role === 'user' ? 'user' : 'ai', m.content);
+    } else if (m.role === 'user') {
       renderMsg(container, 'user', m.content);
     } else if (m.role === 'assistant') {
       const meta = i === lastAiIdx
@@ -447,7 +482,9 @@ async function invia() {
 
   try {
     const history = state.convAttiva
-      ? (state.convAttiva.conversazione || []).map(m => ({ role: m.role === 'admin' ? 'assistant' : m.role, content: m.content }))
+      ? (state.convAttiva.conversazione || [])
+          .filter(m => !m.meta) // esclude domanda di conferma e scelta Sì/No
+          .map(m => ({ role: m.role === 'admin' ? 'assistant' : m.role, content: m.content }))
       : [];
 
     const r    = await fetch('/api/chat', {
@@ -465,17 +502,6 @@ async function invia() {
     } else {
       renderMsg(container, 'ai', data.risposta, { fonti: data.fonti, autoGestita: data.autoGestita, ticket: data.ticket, categoria: data.categoria, priorita: data.priorita, durataMs: data.durataMs });
 
-      // Input: chiudi se AI ha gestito, lascia aperto se escalato
-      if (data.autoGestita) {
-        inp.disabled = true;
-        inp.placeholder = 'Conversazione chiusa';
-        document.getElementById('sendBtn').disabled = true;
-      } else {
-        inp.disabled = false;
-        document.getElementById('sendBtn').disabled = false;
-        avviaPolling(data.ticket);
-      }
-
       // Ricarica lista per aggiornare
       await caricaConversazioni();
       // Segna conv attiva
@@ -486,6 +512,17 @@ async function invia() {
         const el = document.querySelector('.conv-item[onclick*="' + data.ticket + '"]');
         if (el) el.classList.add('active');
       }
+
+      // Se l'AI ha gestito la richiesta: chiedi conferma con tasti Sì/No
+      // (input bloccato finché il condomino non sceglie / scade il timer).
+      if (data.autoGestita) {
+        mostraFollowup(container, data.ticket, nome);
+      } else {
+        // Escalato all'amministratore: lascia l'input aperto e avvia polling
+        inp.disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        avviaPolling(data.ticket);
+      }
     }
   } catch (err) {
     rimuoviTyping(typingId);
@@ -493,6 +530,96 @@ async function invia() {
     inp.disabled = false;
     document.getElementById('sendBtn').disabled = false;
   }
+}
+
+// ── Follow-up conferma chiusura ("hai ottenuto le informazioni?") ─────────────
+function annullaFollowup() {
+  if (state.followupTimer) { clearTimeout(state.followupTimer); state.followupTimer = null; }
+  state.pendingFollowup = null;
+}
+
+function mostraFollowup(container, ticketId, nome) {
+  // L'input resta bloccato: si risponde solo coi tasti
+  const inp = document.getElementById('chatInput');
+  inp.disabled = true;
+  inp.placeholder = 'Rispondi usando i pulsanti qui sopra…';
+  document.getElementById('sendBtn').disabled = true;
+
+  const domanda = `Gentile ${nome}, hai ottenuto le informazioni che cercavi?`;
+  const div = document.createElement('div');
+  div.className = 'msg ai fade-in';
+  div.id = 'followup-block';
+  div.innerHTML =
+    '<div class="msg-bubble">' + escapaHtml(domanda) + '</div>' +
+    '<div class="followup-actions">' +
+      '<button class="followup-btn si" onclick="rispondiFollowup(\'si\')">Sì</button>' +
+      '<button class="followup-btn no" onclick="rispondiFollowup(\'no\')">No</button>' +
+    '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+
+  state.pendingFollowup = { ticketId, nome, domanda };
+  state.followupTimer = setTimeout(() => rispondiFollowup('timeout'), FOLLOWUP_TIMEOUT_MS);
+}
+
+async function rispondiFollowup(scelta) {
+  if (!state.pendingFollowup) return;
+  const { ticketId, nome, domanda } = state.pendingFollowup;
+  if (state.followupTimer) { clearTimeout(state.followupTimer); state.followupTimer = null; }
+  state.pendingFollowup = null;
+
+  // Disabilita i tasti per evitare doppio click
+  const block = document.getElementById('followup-block');
+  const actions = block && block.querySelector('.followup-actions');
+  if (actions) actions.classList.add('disabled');
+
+  const container = document.getElementById('chatMessages');
+  const inp = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  // Voci da persistere nel ticket (escluse dalla history AI tramite meta)
+  const voci = [{ role: 'assistant', content: domanda, meta: 'followup' }];
+
+  if (scelta === 'no') {
+    // Il condomino vuole continuare: la chat resta aperta
+    renderMsg(container, 'user', 'No');
+    voci.push({ role: 'user', content: 'No', meta: 'followup' });
+    inp.disabled = false;
+    sendBtn.disabled = false;
+    inp.placeholder = 'Scrivi un\'altra richiesta…';
+    inp.focus();
+  } else {
+    // 'si' o 'timeout' → chiusura con ringraziamento, ticket resta chiuso da AI
+    if (scelta === 'si') {
+      renderMsg(container, 'user', 'Sì');
+      voci.push({ role: 'user', content: 'Sì', meta: 'followup' });
+    }
+    const ringraziamento = `Perfetto ${nome}, sono felice di esserti stato utile! 🙏 La conversazione è stata chiusa. Per qualsiasi altra esigenza apri pure una nuova richiesta.`;
+    renderMsg(container, 'ai', ringraziamento);
+    voci.push({ role: 'assistant', content: ringraziamento, meta: 'followup' });
+    inp.disabled = true;
+    sendBtn.disabled = true;
+    inp.placeholder = 'Conversazione chiusa';
+  }
+
+  await persistFollowup(ticketId, voci);
+}
+
+async function persistFollowup(ticketId, voci) {
+  try {
+    const r = await fetch('/api/tickets/' + ticketId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appendConversazione: voci })
+    });
+    const ticket = await r.json();
+    // Allinea lo stato locale così la history futura include le voci meta
+    if (ticket && ticket.id) {
+      state.convAttiva = ticket;
+      const idx = state.mioTickets.findIndex(t => t.id === ticket.id);
+      if (idx !== -1) state.mioTickets[idx] = ticket;
+    }
+  } catch {}
 }
 
 // ── Polling risposta admin ────────────────────────────────────────────────────

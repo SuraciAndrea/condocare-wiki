@@ -153,13 +153,22 @@ Aggiorna un ticket. Tutti i campi sono opzionali.
   "stato": "in_gestione",
   "gestitoDa": "Amministratore",
   "noteAdmin": "Verificare con il notaio",
-  "rispostaAdmin": "Gentile condòmino, la risposta è..."
+  "rispostaAdmin": "Gentile condòmino, la risposta è...",
+  "appendConversazione": [
+    { "role": "assistant", "content": "Hai ottenuto le informazioni?", "meta": "followup" },
+    { "role": "user", "content": "Sì", "meta": "followup" }
+  ]
 }
 ```
 
 Quando viene impostato `rispostaAdmin`:
 - `rispostaAdminAt` viene compilato automaticamente con il timestamp corrente
 - `stato` viene impostato a `chiusa_admin` se non già specificato
+
+`appendConversazione` (opzionale) accoda voci alla `conversazione` del ticket
+senza modificarne lo `stato`. Usato dal flusso di conferma chiusura lato condomino
+per salvare la domanda "hai ottenuto le informazioni?" e la scelta Sì/No
+(voci con `meta: "followup"`).
 
 **Risposta:** oggetto ticket aggiornato.
 
