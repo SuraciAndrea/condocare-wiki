@@ -18,16 +18,16 @@
       color: rgba(255,255,255,.3); font-size: .75rem;
       letter-spacing: .04em; text-align: center; width: 100%;
     }
-    .status-strip {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      margin-top: 16px;
-      font-size: .78rem; color: rgba(255,255,255,.45);
+    .index-logo-big {
+      display: block;
+      width: min(380px, 80vw);
+      height: auto;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px 26px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
     }
-    .status-strip .dot {
-      width: 7px; height: 7px; border-radius: 50%; background: #888;
-    }
-    .status-strip .dot.online  { background: #6AC99A; animation: pulse-dot 2s infinite; }
-    .status-strip .dot.offline { background: #E07060; }
   </style>
 </head>
 <body>
@@ -35,14 +35,7 @@
 
     <!-- Logo -->
     <div class="logo-wrapper">
-      <img class="logo-img large on-dark" src="logo.png" alt="CondoCare" style="margin:0 auto 12px;">
-      <div class="index-tagline">Rispondi ai tuoi condòmini con AI locale, privata e gratuita.</div>
-      <div class="status-strip">
-        <span class="dot" id="statusDot"></span>
-        <span id="statusLabel">Connessione in corso...</span>
-        &nbsp;·&nbsp;
-        <span id="docsLabel">Caricamento documenti...</span>
-      </div>
+      <img class="index-logo-big" src="LogoBig.png" alt="CondoCare">
     </div>
 
     <!-- Role selection -->
@@ -67,14 +60,6 @@
     <!-- KPI strip -->
     <div class="index-kpi">
       <div class="index-kpi-item">
-        <div class="num">100%</div>
-        <div class="lbl">locale<br>e privato</div>
-      </div>
-      <div class="index-kpi-item">
-        <div class="num">€0</div>
-        <div class="lbl">costo<br>per query</div>
-      </div>
-      <div class="index-kpi-item">
         <div class="num">PDF</div>
         <div class="lbl">DOCX · TXT<br>supportati</div>
       </div>
@@ -86,40 +71,5 @@
 
     <div class="index-scroll-hint">CondoCare · Powered by Groq</div>
   </div>
-
-  <script>
-    window.addEventListener('DOMContentLoaded', async () => {
-      const dot   = document.getElementById('statusDot');
-      const label = document.getElementById('statusLabel');
-      const docs  = document.getElementById('docsLabel');
-
-      try {
-        const [sr, dr] = await Promise.all([fetch('/api/status'), fetch('/api/docs')]);
-        const sd = await sr.json();
-        const dd = await dr.json();
-
-        if (sd.ollamaOnline && sd.modelloPresente) {
-          dot.className  = 'dot online';
-          label.textContent = `AI pronta · ${sd.modelloCorrente}`;
-        } else if (sd.ollamaOnline) {
-          dot.className  = 'dot offline';
-          label.textContent = `Modello ${sd.modelloCorrente} non disponibile`;
-        } else {
-          dot.className  = 'dot offline';
-          label.textContent = 'Servizio AI non disponibile';
-        }
-
-        const n = (dd.files || []).length;
-        docs.textContent = n > 0
-          ? `${n} document${n === 1 ? 'o' : 'i'} nella base di conoscenza`
-          : 'Nessun documento caricato — vai in Dashboard';
-
-      } catch {
-        dot.className   = 'dot offline';
-        label.textContent = 'Errore connessione';
-        docs.textContent  = '';
-      }
-    });
-  </script>
 </body>
 </html>
