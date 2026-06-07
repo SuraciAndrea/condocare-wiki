@@ -336,7 +336,9 @@ function fallbackEscalationAI(motivo) {
 }
 
 async function generaRispostaAI(messaggio, documenti, history, fontiUsate = [], nomeCondomino = '') {
-  const saluto = nomeCondomino ? `Rivolgiti all'utente usando il suo nome (${nomeCondomino}) in modo naturale, con un saluto cordiale all'inizio della risposta.\n` : '';
+  const saluto = nomeCondomino
+    ? `Inizia SEMPRE la risposta con un saluto cordiale usando il nome dell'utente, ad esempio "Ciao ${nomeCondomino}," oppure "Buongiorno ${nomeCondomino},". Mantieni un tono caldo e amichevole per tutta la risposta.\n`
+    : 'Inizia SEMPRE la risposta con un saluto cordiale (es. "Buongiorno," o "Ciao,"). Mantieni un tono caldo e amichevole per tutta la risposta.\n';
   const system = 'Sei l\'assistente digitale di uno studio di amministrazione condominiale.\n' +
     'Devi rispondere SOLO se il CONTESTO DOCUMENTALE contiene informazioni sufficienti e specifiche per dare una risposta affidabile.\n' +
     'Se l\'informazione non e presente, e ambigua, incompleta o non sei sicuro, NON devi rispondere nel merito: devi impostare puoRispondere=false e dire che inoltrerai la richiesta all\'amministratore.\n' +
@@ -505,7 +507,7 @@ app.post('/api/chat', async (req, res) => {
     console.error('Errore chat:', err.message);
     let msg = err.message;
     if (msg.includes('ECONNREFUSED') || msg.includes('fetch')) {
-      msg = 'Impossibile connettersi a Ollama (' + OLLAMA_URL + ').\nAssicurati che sia in esecuzione: ollama serve';
+      msg = 'Servizio AI non raggiungibile. Verifica la configurazione del server.';
     }
     res.status(500).json({ errore: msg });
   } finally {

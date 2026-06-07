@@ -42,7 +42,7 @@
       <div class="index-tagline">Rispondi ai tuoi condòmini con AI locale, privata e gratuita.</div>
       <div class="status-strip">
         <span class="dot" id="statusDot"></span>
-        <span id="statusLabel">Controllo Ollama...</span>
+        <span id="statusLabel">Connessione in corso...</span>
         &nbsp;·&nbsp;
         <span id="docsLabel">Caricamento documenti...</span>
       </div>
@@ -87,7 +87,7 @@
       </div>
     </div>
 
-    <div class="index-scroll-hint">WikiLocal · Powered by Ollama · Workflow CondoCare</div>
+    <div class="index-scroll-hint">WikiLocal · Powered by Groq · Workflow CondoCare</div>
   </div>
 
   <script>
@@ -103,13 +103,13 @@
 
         if (sd.ollamaOnline && sd.modelloPresente) {
           dot.className  = 'dot online';
-          label.textContent = `Ollama pronto · ${sd.modelloCorrente}`;
+          label.textContent = `AI pronta · ${sd.modelloCorrente}`;
         } else if (sd.ollamaOnline) {
           dot.className  = 'dot offline';
-          label.textContent = `Modello ${sd.modelloCorrente} non scaricato`;
+          label.textContent = `Modello ${sd.modelloCorrente} non disponibile`;
         } else {
           dot.className  = 'dot offline';
-          label.textContent = 'Ollama offline — avvia: ollama serve';
+          label.textContent = 'Servizio AI non disponibile';
         }
 
         const n = (dd.files || []).length;

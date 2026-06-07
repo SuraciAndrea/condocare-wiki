@@ -230,10 +230,6 @@
 
         <!-- Quick actions (solo per conv nuova) -->
         <div class="chat-quick" id="quickActions" style="display:none;">
-          <button class="chat-quick-btn" data-text="Quanto devo pagare per la rata e quando scade?">💶 Rata e pagamenti</button>
-          <button class="chat-quick-btn" data-text="Può mandarmi il verbale dell'ultima assemblea condominiale?">📄 Verbale assemblea</button>
-          <button class="chat-quick-btn" data-text="Quando finiscono i lavori? Ci sono aggiornamenti?">ℹ️ Stato lavori</button>
-          <button class="chat-quick-btn" data-text="C'è una perdita d'acqua nel corridoio del piano terra, segnalo subito.">⚠️ Segnala problema</button>
         </div>
 
         <!-- Messaggi -->
@@ -383,10 +379,19 @@ function apriConversazione(ticketId) {
   // Renderizza la conversazione
   const container = document.getElementById('chatMessages');
   container.innerHTML = '';
-  (ticket.conversazione || []).forEach(m => {
-    if (m.role === 'user')      renderMsg(container, 'user',  m.content);
-    else if (m.role === 'assistant') renderMsg(container, 'ai', m.content, { fonti: ticket.fonti });
-    else if (m.role === 'admin') renderMsgAdmin(container, m.content, m.timestamp);
+  const conv = ticket.conversazione || [];
+  const lastAiIdx = conv.reduce((last, m, i) => m.role === 'assistant' ? i : last, -1);
+  conv.forEach((m, i) => {
+    if (m.role === 'user') {
+      renderMsg(container, 'user', m.content);
+    } else if (m.role === 'assistant') {
+      const meta = i === lastAiIdx
+        ? { fonti: ticket.fonti, ticket: ticket.id, autoGestita: ticket.stato === 'chiusa' || ticket.stato === 'chiusa_admin', categoria: ticket.categoria, priorita: ticket.priorita }
+        : { fonti: ticket.fonti };
+      renderMsg(container, 'ai', m.content, meta);
+    } else if (m.role === 'admin') {
+      renderMsgAdmin(container, m.content, m.timestamp);
+    }
   });
   container.scrollTop = container.scrollHeight;
 
