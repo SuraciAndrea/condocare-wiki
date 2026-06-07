@@ -329,19 +329,21 @@ function fallbackEscalationAI(motivo) {
   return {
     puoRispondere: false,
     sicurezza: 'bassa',
-    risposta: 'Grazie per averci scritto. Non ho elementi documentali sufficienti per risponderti con certezza: inoltro la richiesta all\'amministratore, che ti darà riscontro appena possibile.',
+    risposta: 'Grazie per averci scritto! Non ho elementi documentali sufficienti per risponderti con certezza in questo momento: provvederò a inoltrare la tua richiesta all\'amministratore, che ti darà riscontro il prima possibile.',
     motivazione: motivo || 'informazione non certa',
     fonti: []
   };
 }
 
-async function generaRispostaAI(messaggio, documenti, history, fontiUsate = []) {
+async function generaRispostaAI(messaggio, documenti, history, fontiUsate = [], nomeCondomino = '') {
+  const saluto = nomeCondomino ? `Rivolgiti all'utente usando il suo nome (${nomeCondomino}) in modo naturale, con un saluto cordiale all'inizio della risposta.\n` : '';
   const system = 'Sei l\'assistente digitale di uno studio di amministrazione condominiale.\n' +
     'Devi rispondere SOLO se il CONTESTO DOCUMENTALE contiene informazioni sufficienti e specifiche per dare una risposta affidabile.\n' +
     'Se l\'informazione non e presente, e ambigua, incompleta o non sei sicuro, NON devi rispondere nel merito: devi impostare puoRispondere=false e dire che inoltrerai la richiesta all\'amministratore.\n' +
     'Non inventare, non usare conoscenza generale per sostituire i documenti, non chiudere domande dubbie.\n' +
     'Quando rispondi nel merito, cita il nome del file sorgente in forma testuale, ad esempio: Fonte: nomefile.docx.\n' +
-    'Tono cordiale, diretto. Italiano. Evita asterischi inutili.\n\n' +
+    saluto +
+    'Tono cordiale, caldo e user-friendly. Italiano. Evita asterischi inutili.\n\n' +
     'Devi rispondere SOLO con JSON valido, senza testo prima o dopo, con questa struttura:\n' +
     '{"puoRispondere":true,"sicurezza":"alta|media|bassa","risposta":"testo per il condomino","motivazione":"breve motivo","fonti":["nomefile.docx"]}\n\n' +
     'Regole obbligatorie:\n' +
@@ -460,7 +462,7 @@ app.post('/api/chat', async (req, res) => {
     // se chiudere o inoltrare. La chiusura dipende dalla capacità effettiva
     // dell'AI di trovare una risposta supportata dai documenti.
     if (documenti && documenti.trim()) {
-      const rispostaAI = await generaRispostaAI(messaggio, documenti, history, rag.fontiUsate);
+      const rispostaAI = await generaRispostaAI(messaggio, documenti, history, rag.fontiUsate, condomino);
       const risoltaDaAI = rispostaGestibileDaAI(rispostaAI);
 
       if (risoltaDaAI) {
@@ -478,7 +480,8 @@ app.post('/api/chat', async (req, res) => {
       console.log('[AI] Sicurezza:', rispostaAI.sicurezza, '| puoRispondere:', rispostaAI.puoRispondere, '| risoltaDaAI:', risoltaDaAI, '| Ticket:', statoTicket, '| Motivo:', rispostaAI.motivazione || 'n/d');
 
     } else {
-      rispostaFinale = "Grazie per averci scritto. Non ho trovato nei documenti elementi sufficienti per risponderti con certezza: inoltro la richiesta all'amministratore, che ti risponderà a breve.";
+      const salutoFallback = condomino ? `Gentile ${condomino}, ` : 'Gentile condomino, ';
+      rispostaFinale = salutoFallback + "grazie per averci scritto. Non ho trovato nei documenti elementi sufficienti per risponderti con certezza: inoltrerò la tua richiesta all'amministratore, che ti risponderà a breve.";
       statoTicket    = 'aperta';
       gestitoDa      = 'Amministratore';
       esitoGestione  = 'inoltrato_amministratore';
