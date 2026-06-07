@@ -538,7 +538,7 @@ app.patch('/api/tickets/:id', (req, res) => {
   if (rispostaAdmin) {
     tickets[idx].rispostaAdmin   = rispostaAdmin;
     tickets[idx].rispostaAdminAt = new Date().toISOString();
-    tickets[idx].stato           = tickets[idx].stato || 'chiusa_admin';
+    tickets[idx].stato           = 'chiusa_admin';
   }
   tickets[idx].aggiornatoAt = new Date().toISOString();
   salvaTickets(tickets);

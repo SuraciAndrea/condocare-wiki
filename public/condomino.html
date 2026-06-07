@@ -393,6 +393,12 @@ function apriConversazione(ticketId) {
       renderMsgAdmin(container, m.content, m.timestamp);
     }
   });
+  // Mostra risposta admin se presente e non già in conversazione
+  const hasAdminInConv = conv.some(m => m.role === 'admin');
+  if (ticket.rispostaAdmin && !hasAdminInConv) {
+    renderMsgAdmin(container, ticket.rispostaAdmin, ticket.rispostaAdminAt);
+  }
+
   container.scrollTop = container.scrollHeight;
 
   // Input: disabilitato per storico chiuso, abilitato per aperto
