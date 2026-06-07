@@ -561,16 +561,3 @@ app.listen(PORT, () => {
   console.log('   API Key configurata: ' + (GROQ_API_KEY ? 'Sì' : '⚠️  NO — imposta GROQ_API_KEY'));
   console.log('   Documenti in: ' + RAW_DIR + '\n');
 });
-: update\ndata: ' + JSON.stringify({ tickets, kpi: calcolaKPI(tickets) }) + '\n\n');
-  const ka = setInterval(() => { try { res.write(': ka\n\n'); } catch { clearInterval(ka); } }, 25000);
-  req.on('close', () => { sseClients.delete(res); clearInterval(ka); });
-});
-
-// Avvio
-app.listen(PORT, () => {
-  console.log('\n✅ LLM Wiki Local — Workflow CondoCare');
-  console.log('   http://localhost:' + PORT);
-  console.log('   Provider: Groq | Modello: ' + GROQ_MODEL);
-  console.log('   API Key configurata: ' + (GROQ_API_KEY ? 'Sì' : '⚠️  NO — imposta GROQ_API_KEY'));
-  console.log('   Documenti in: ' + RAW_DIR + '\n');
-});
